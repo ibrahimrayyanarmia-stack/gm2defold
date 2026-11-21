@@ -164,7 +164,6 @@ gm2defold/
 │   ├── gm/             Runtime: gm.lua, draw.lua, audio.lua, lib.lua
 │   ├── main/           main.script, sprite material/shaders, font
 │   └── game.project
-├── engine/             Windows engine binaries + screenshot helper
 ├── tools/
 │   └── mp3towav.ps1    mp3 → wav (Defold has no mp3 support)
 ```

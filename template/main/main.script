@@ -1,0 +1,19 @@
+-- Boots the GameMaker compatibility runtime (gm/) and the ported game (game/).
+local gm = require "gm.gm"
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+	gm.boot(require "game.meta", function() require "game.main" end)
+end
+
+function update(self, dt)
+	gm.update(dt)
+end
+
+function on_input(self, action_id, action)
+	gm.on_input(action_id, action)
+end
+
+function final(self)
+	gm.final()
+end
