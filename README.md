@@ -9,8 +9,8 @@ model and the room semantics, so ported code looks almost the same as the origin
 > [!IMPORTANT]
 > **Project status: asset converter + runtime.** gm2defold converts all assets and metadata
 > automatically. It does not translate GML to Lua yet: it writes Lua stubs that contain the
-> original GML, and you port the logic by hand using the rules in [`PORTING.md`](PORTING.md).
-> An automatic GML→Lua transpiler is planned. See the [Roadmap](#roadmap).
+> original GML, and you port the logic by hand.
+> An automatic GML→Lua transpiler is planned.
 
 ---
 
@@ -68,7 +68,7 @@ cd gm2defold
 # 1. Convert
 python3 gm2defold.py "/path/to/MyGame" ../MyGameDefold --title "My Game"
 
-# 2. Port the GML in ../MyGameDefold/game/**/*.lua  (see PORTING.md)
+# 2. Port the GML in ../MyGameDefold/game/**/*.lua
 
 # 3. Build (Lua syntax errors show up here)
 ./build.sh ../MyGameDefold
@@ -167,8 +167,6 @@ gm2defold/
 ├── engine/             Windows engine binaries + screenshot helper
 ├── tools/
 │   └── mp3towav.ps1    mp3 → wav (Defold has no mp3 support)
-├── PORTING.md          Translation guide: GML → Lua rules, events, runtime API
-└── AGENTS.md           Notes for coding agents and the transpiler plan
 ```
 
 ## Supported features
@@ -190,8 +188,6 @@ gm2defold/
 | mp3 sounds | ⚠️ convert them first with `tools/mp3towav.ps1` |
 | Surfaces, `sprite_create_from_surface` | ❌ stubs; pre-render the art instead |
 | Shaders, tile layers, paths, sequences, particles, gamepads | ❌ |
-
-See [`PORTING.md`](PORTING.md) for the complete list of translation rules and runtime functions.
 
 ## Testing your port
 
@@ -223,12 +219,10 @@ playable Defold project with no manual porting. The planned steps are:
 
 - [ ] GML lexer and parser (GML 2.3+ syntax, structs, methods, constructors)
 - [ ] Scope resolution (locals, instance variables, globals, assets, script functions)
-- [ ] Lua code generation that applies the `PORTING.md` rules automatically (Lua 5.1 / HTML5 safe)
+- [ ] Lua code generation that applies the rules automatically (Lua 5.1 / HTML5 safe)
 - [ ] Runtime coverage: surfaces through render targets, audio buffers, automatic mp3 conversion
 - [ ] A conversion report and `--strict` mode
-- [ ] An end-to-end test suite against a corpus of GameMaker projects
-
-The detailed plan is in [`AGENTS.md`](AGENTS.md).
+- [ ] An end-to-end test suite against a corpus of GameMaker project
 
 ## Contributing
 
