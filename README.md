@@ -10,7 +10,8 @@ model and the room semantics, so ported code looks almost the same as the origin
 > **Project status: asset converter + runtime.** gm2defold converts all assets and metadata
 > automatically. It does not translate GML to Lua yet: it writes Lua stubs that contain the
 > original GML, and you port the logic by hand.
-> An automatic GML→Lua transpiler is planned.
+> An automatic GML→Lua transpiler is in progress. Its first stage, the GML lexer and parser
+> (`gml/`), is complete, but the converter doesn't use it yet (see [GML parser](#gml-parser)).
 
 ---
 
@@ -21,6 +22,7 @@ model and the room semantics, so ported code looks almost the same as the origin
 - [Quick start](#quick-start)
 - [Usage](#usage)
 - [How it works](#how-it-works)
+- [GML parser](#gml-parser)
 - [Project layout](#project-layout)
 - [Supported features](#supported-features)
 - [Testing your port](#testing-your-port)
@@ -153,6 +155,53 @@ The runtime runs the GameMaker event order every frame: begin step, alarms, step
 end step, then the draw events. It inherits events through parents, calls `draw_self()` when an
 object has no draw event, and handles room transitions and persistent instances.
 
+## GML parser
+
+`gml/` is a standalone GML 2.3+ front end. It is the first stage of the planned transpiler, and
+code generation will be built on top of it.
+
+- **Lexer** (`gml/lexer.py`):
+  - Numbers in every GML form: `$FF`, `0x`, `0b`, `.5`, `1_000` and `#RRGGBB` colours.
+  - Strings: normal ones with escapes, `@"..."` verbatim strings and `$"{expr}"` templates.
+  - `#macro` (including `config:` and `\` line continuation) and `#region`.
+  - All operators, including `div mod and or xor not`, `??` / `??=` and the accessors
+    `[| [? [# [@ [$`.
+  - Semicolons are optional.
+- **Parser** (`gml/parser.py`) is a recursive-descent parser covering every statement and
+  expression form:
+  - Control flow: `if`/`while`/`do..until`/`for`/`repeat`, `switch` with fall-through, `with`,
+    `try`/`catch`/`finally` and `throw`.
+  - Declarations: `var`, `globalvar`, `static`, functions (including constructors and
+    inheritance) and `enum`.
+  - Expressions: struct and array literals, `new` and function expressions.
+  - GameMaker precedence: bitwise operators bind tighter than comparisons, and `=` inside an
+    expression means `==`.
+- **Macros** are substituted token by token, project-wide, as GameMaker does. Macro bodies don't
+  have to be complete expressions (`#macro SPAWN new Enemy`).
+- **Error recovery**: a statement that doesn't parse becomes an `Unparsed` node holding its
+  source text, and parsing continues with the next statement. `parse()` never raises.
+- **AST**: every node kind and its fields are documented in `gml/ast.py`.
+
+```python
+from gml import parse, collect_macros, dump
+
+macros = {}
+for src in all_gml_sources:            # macros are global to the project
+    macros.update(collect_macros(src))
+prog = parse(src, filename="obj_player/Step_0.gml", macros=macros)
+for err in prog.errors:
+    print(err)                          # file:line:col: message
+print(dump(prog.body[0]))               # (Assign += x (Binary * spd 2))
+```
+
+From the command line, run inside `gm2defold/`:
+
+```bash
+python3 -m gml path/to/MyGame            # parse every .gml file, report errors
+python3 -m gml --dump file.gml           # print the AST
+python3 -m gml --tokens file.gml         # print the token stream
+```
+
 ## Project layout
 
 ```
@@ -160,6 +209,8 @@ gm2defold/
 ├── gm2defold.py        Converter
 ├── build.sh            Headless build with bob
 ├── run.sh              Run, log, screenshot, scripted input
+├── gml/                GML lexer, parser and AST (transpiler front end)
+├── tests/              Unit tests (python3 -m unittest discover -s tests)
 ├── template/
 │   ├── gm/             Runtime: gm.lua, draw.lua, audio.lua, lib.lua
 │   ├── main/           main.script, sprite material/shaders, font
@@ -216,15 +267,16 @@ game keeps running, so check the log after every run.
 The main goal is a **fully automatic GML → Lua transpiler**, so a GameMaker project converts into a
 playable Defold project with no manual porting. The planned steps are:
 
-- [ ] GML lexer and parser (GML 2.3+ syntax, structs, methods, constructors)
+- [x] GML lexer and parser (GML 2.3+ syntax, structs, methods, constructors, error recovery)
 - [ ] Scope resolution (locals, instance variables, globals, assets, script functions)
 - [ ] Lua code generation that applies the rules automatically (Lua 5.1 / HTML5 safe)
 - [ ] Runtime coverage: surfaces through render targets, audio buffers, automatic mp3 conversion
 - [ ] A conversion report and `--strict` mode
-- [ ] An end-to-end test suite against a corpus of GameMaker project
+- [ ] An end-to-end test suite against a corpus of GameMaker projects
 
 ## Contributing
 
+- Run the unit tests (`python3 -m unittest discover -s tests`) after you change `gml/`.
 - Run `./build.sh` on at least one converted project after you change the runtime or the converter.
 - Keep the converter dependency-free (Python standard library only).
 - Generated Lua must run on both LuaJIT and plain Lua 5.1 (no `goto`).

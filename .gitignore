@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local engine binaries used by run.sh / the pre-bake step (copied from a Defold install, not redistributed)
+engine/*.exe
+engine/*.dll
+
+# Locally converted audio (per-project output of tools/mp3towav.ps1)
+converted_sounds/
+
+# Defold build output / editor state (e.g. if template/ is opened in the editor)
+build/
+.internal/
+.editor_settings
+*.projectc
+
+# Test / scratch output
+tests/out/
+*.log
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
